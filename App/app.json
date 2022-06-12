@@ -25,7 +25,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "permissions": ["ACCESS_FINE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION"
+      ],
+      "package": "mage.nutswidget"
     },
     "web": {
       "favicon": "./assets/favicon.png"

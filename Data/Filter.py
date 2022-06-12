@@ -6,9 +6,9 @@ def read_NUTS_data():
 
     NUTS_lvl_3 = dict()
     NUTS_lvl_3['type'] = "FeatureCollection"
-    NUTS_lvl_3['features'] = [feature for feature in json_content['features'] if feature['properties']['LEVL_CODE'] == 3]
+    NUTS_lvl_3['features'] = [feature for feature in json_content['features'] if feature['properties']['CNTR_CODE'] == 'DE']
 
-    with open('NUTS_3_DE.geojson', 'w') as outfile:
+    with open('NUTS_ALL_DE.geojson', 'w') as outfile:
         json.dump(NUTS_lvl_3, outfile)
 
 
