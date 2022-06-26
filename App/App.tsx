@@ -48,12 +48,18 @@ export default function App() {
   let [trackingStarted, setTrackingStarted] = React.useState(false);
 
   useEffect(() => {
-    requestLocationPermissions();
-    defineTrackingTask();
+    onAppStart();
   }, []);
 
+  const onAppStart = async () => {
+    await requestLocationPermissions();
+    defineTrackingTask();
+  }
+
   const defineTrackingTask = () => {
+    console.log('defining task')
     TaskManager.defineTask(TRACKING_TASK_NAME, ({ data, error }: { data: any, error: any }) => {
+      console.log('track');
       const locations: Array<{coords: LocationObjectCoords}> = data.locations;
       if (error) {
         console.error(error);
@@ -78,7 +84,6 @@ export default function App() {
           if (Geometry.pointInPolygon({ x: lng, y: lat }, polygon)) {
             locationLevels[feature.properties.LEVL_CODE] = feature.properties.NAME_LATN
             found[feature.properties.LEVL_CODE] = true;
-            setLocation(locationLevels);
             return;
           }
         } else if (feature.geometry.type === 'MultiPolygon') {
@@ -86,22 +91,25 @@ export default function App() {
           if (Geometry.pointInMultiPolygon({ x: lat, y: lng }, multiPolygon)) {
             locationLevels[feature.properties.LEVL_CODE] = feature.properties.NAME_LATN
             found[feature.properties.LEVL_CODE] = true;
-            setLocation(locationLevels);
             return;
           }
         }
       });
 
+      setLocation((prevLocation) => ({ ...prevLocation, ...locationLevels }));
+
       SharedStorage.set(JSON.stringify({locationLevels}));
-      setTrackingCount(trackingCount++)
+      setTrackingCount((prevTrackingCount) => prevTrackingCount + 1)
      }
     );
   }
 
   const startTracking = async () => {
     await Location.startLocationUpdatesAsync(TRACKING_TASK_NAME, {
-      accuracy: Location.Accuracy.Highest,
-      distanceInterval: 100
+      accuracy: Location.Accuracy.BestForNavigation,
+      timeInterval: 10000,
+      showsBackgroundLocationIndicator: true,
+      deferredUpdatesInterval: 100
     });
 
     const hasStarted = await Location.hasStartedLocationUpdatesAsync(TRACKING_TASK_NAME);
