@@ -1,38 +1,21 @@
 import React from 'react';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Button, StyleSheet, Text, SafeAreaView, NativeModules } from 'react-native';
+
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { LocationObjectCoords } from 'expo-location';
+import { NUTSData, NUTSLevelObject } from './types/NUTS';
+
 import Geometry from './helper/Geometry';
+
+import { StatusBar } from 'expo-status-bar';
+import { Button, StyleSheet, Text, /* NativeModules, */ Dimensions } from 'react-native';
+import LocationDisplay from './components/LocationDisplay';
+import { NativeBaseProvider, Center, Box } from "native-base";
 
 const NUTS_DATA = require('./assets/NUTS_ALL_DE.json');
 
-const group = 'group.mage';
-const SharedStorage = NativeModules.SharedStorage;
-
-type NUTSLevels = 0|1|2|3;
-type NUTSData = {
-  geometry: {
-    type: string,
-    coordinates: Array<Array<any>>
-  },
-  properties: {
-    NUTS_ID: string,
-    LEVL_CODE: NUTSLevels,
-    CNTR_CODE: string,
-    NAME_LATN: string,
-    NUTS_NAME: string,
-    FID: string
-  }
-};
-type NUTSLevelObject = {
-  0: any, // Country
-  1: any, // State
-  2: any, // Region
-  3: any, // County
-};
+// const SharedStorage = NativeModules.SharedStorage;
 
 export default function App() {
   const TRACKING_TASK_NAME = 'location_tracking'
@@ -45,6 +28,7 @@ export default function App() {
 
   let [location, setLocation] = React.useState<NUTSLevelObject>(locationLevels);
   let [trackingCount, setTrackingCount] = React.useState(0);
+  let [trackingTime, setTrackingTime] = React.useState(new Date());
   let [trackingStarted, setTrackingStarted] = React.useState(false);
 
   useEffect(() => {
@@ -53,13 +37,10 @@ export default function App() {
 
   const onAppStart = async () => {
     await requestLocationPermissions();
-    defineTrackingTask();
   }
 
   const defineTrackingTask = () => {
-    console.log('defining task')
     TaskManager.defineTask(TRACKING_TASK_NAME, ({ data, error }: { data: any, error: any }) => {
-      console.log('track');
       const locations: Array<{coords: LocationObjectCoords}> = data.locations;
       if (error) {
         console.error(error);
@@ -97,14 +78,17 @@ export default function App() {
       });
 
       setLocation((prevLocation) => ({ ...prevLocation, ...locationLevels }));
+      setTrackingCount((prevTrackingCount) => prevTrackingCount + 1);
+      setTrackingTime(() => new Date());
 
-      SharedStorage.set(JSON.stringify({locationLevels}));
-      setTrackingCount((prevTrackingCount) => prevTrackingCount + 1)
+      // SharedStorage.set(JSON.stringify({locationLevels}));
      }
     );
   }
 
   const startTracking = async () => {
+    defineTrackingTask();
+
     await Location.startLocationUpdatesAsync(TRACKING_TASK_NAME, {
       accuracy: Location.Accuracy.BestForNavigation,
       timeInterval: 10000,
@@ -142,28 +126,55 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {
-        trackingStarted ?
-          <Button title="Stop tracking" onPress={handlePressStopTracking} />
-          :
-          <Button title="Start tracking" onPress={handlePressStartTracking} />
-      }
-      <Text>Land: {location[0]}</Text>
-      <Text>Bundesland: {location[1]}</Text>
-      <Text>Regierungsbezirk: {location[2]}</Text>
-      <Text>Landkreis: {location[3]}</Text>
-      <Text>Tracking Count: {trackingCount}</Text>
+    <NativeBaseProvider>
+      <Box safeArea style={styles.container}>
+        <Center style={styles.heading}><Text style={styles.headingText}>Wo bin ich?</Text></Center>
+        <Center style={styles.trackingButton}>
+          {
+          trackingStarted ?
+            <Button title="Tracking stoppen" onPress={handlePressStopTracking} color="#ff000099" />
+            :
+            <Button title="Tracking starten" onPress={handlePressStartTracking} color="#0000ff99" />
+          }
+        </Center>
+        <Center>
+          <LocationDisplay location={location} />
+        </Center>
+        <Center>
+          <Text style={styles.trackingCount}>Letzte Abfrage: {trackingCount ? trackingTime.toLocaleTimeString('de-DE') : '-'}</Text>
+        </Center>
+      </Box>
       <StatusBar style="auto" />
-    </SafeAreaView>
+      {(trackingStarted && trackingCount === 0) && <Center style={[styles.loadingIndicator, {transform: [{ translateX: -Dimensions.get('window').width * 0.3 }]}]} width='60%' height='10%'><Text>Standort wird gesucht...</Text></Center>}
+    </NativeBaseProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#eeeeee22',
+    height: '100%',
   },
+  loadingIndicator: {
+    top: '50%',
+    left: '50%',
+    position: 'absolute',
+    backgroundColor: '#dddddddd'
+  },
+  heading: {
+    marginTop: '10%',
+    marginBottom: '30%'
+  },
+  headingText: {
+    fontSize: 32,
+    fontWeight: '900'
+  },
+  trackingButton: {
+    marginBottom: 20,
+  },
+  trackingCount: {
+    marginTop: 20,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '300',
+  }
 });
