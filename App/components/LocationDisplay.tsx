@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
         padding: 10,
         margin: 10,
         textTransform: 'uppercase',
-        backgroundColor: '#eee'
+        backgroundColor: '#ddddff'
     },
     locationTextDescriptor: {
         fontVariant: ['small-caps'],

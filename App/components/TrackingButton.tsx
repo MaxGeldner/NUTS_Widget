@@ -1,14 +1,24 @@
 import React from 'react';
-import { Button } from 'react-native';
+import { Button, Icon } from 'native-base';
 
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { LocationObjectCoords } from 'expo-location';
-import { NUTSData, NUTSLevelObject } from '../types/NUTS';
+import { NUTSData, NUTSLevelObject, NUTSGeoJSON } from '../types/NUTS';
+import { FontAwesome } from '@expo/vector-icons';
 
 import Geometry from '../helper/Geometry';
 
-export default function TrackingButton ({ onTrackStart, onTrackStop, onTrack, nutsData }: { onTrackStart: Function, onTrackStop: Function, onTrack: Function, nutsData: any }) {
+/**
+ * Renders the start/stop tracking button depending on the current tracking state. Also contains logic for starting and stoping tracking, which is called
+ * via the handler functions for the start/stop button.
+ * @param obj.onTrackStart Function that will be executed when tracking started successfuly
+ * @param obj.onTrackStop Function that will be executed when tracking stopped successfuly
+ * @param obj.onTrack Function that will be executed everytime a tracking was done. Will have the location (NUTSLevelObject) as parameter
+ * @param obj.nutsData The data basis for the tracking.
+ * @returns 
+ */
+export default function TrackingButton ({ onTrackStart, onTrackStop, onTrack, nutsData }: { onTrackStart: Function, onTrackStop: Function, onTrack: Function, nutsData: NUTSGeoJSON }) {
     const TRACKING_TASK_NAME = 'location_tracking'
     let locationLevels: NUTSLevelObject = {
       0: '-',
@@ -109,6 +119,6 @@ export default function TrackingButton ({ onTrackStart, onTrackStop, onTrack, nu
     };
 
     return trackingStarted ? 
-        <Button title="Tracking stoppen" onPress={handlePressStopTracking} color="#ff000099" />
-        : <Button title="Tracking starten" onPress={handlePressStartTracking} color="#0000ff99" />
+        <Button leftIcon={<Icon as={FontAwesome} name="pause" size="sm" />} onPress={handlePressStopTracking} colorScheme="red">Tracking</Button>
+        : <Button leftIcon={<Icon as={FontAwesome} name="play" size="sm" />} onPress={handlePressStartTracking} colorScheme="green">Tracking</Button>
 }
