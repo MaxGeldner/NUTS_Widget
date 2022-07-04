@@ -97,6 +97,7 @@ export default function Tracking ({ navigation }: { navigation: any }) {
         // TODO: probably not the best to use the timestamp as an id. But it will be sufficient for the current app implementation :)
         id: `${visistedAt}`,
         data: vistied,
+        expires: null,
       });
 
       const storageContent = await visitedStorage.getAllDataForKey('progressItem');
