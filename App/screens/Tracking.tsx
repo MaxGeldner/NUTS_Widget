@@ -49,8 +49,8 @@ export default function Tracking ({ navigation }: { navigation: any }) {
 
   const onOpen = async () => {
     // Get initial data from store, that is displayed on the other screens
-    const historyItems = await visitedStorage.getAllDataForKey('historyItem')
-    const progressItems = await visitedStorage.getAllDataForKey('progressItem')
+    const historyItems = await getAllDataForKey('historyItem')
+    const progressItems = await getAllDataForKey('progressItem')
     setTrackingHistory(() => historyItems)
     setTrackingProgress(() => progressItems)
   }
@@ -83,7 +83,7 @@ export default function Tracking ({ navigation }: { navigation: any }) {
    * @param location 
    */
   const saveToProgressStorage = async (location: NUTSLevelObject) => {
-    const storageContent = await visitedStorage.getAllDataForKey('progressItem');
+    const storageContent = await getAllDataForKey('progressItem');
     const alreadyProgressed = storageContent.find(({ levels }: { levels: NUTSLevelObject }) => JSON.stringify(levels) === JSON.stringify(location));
 
     if (!alreadyProgressed) {
@@ -97,10 +97,11 @@ export default function Tracking ({ navigation }: { navigation: any }) {
         // TODO: probably not the best to use the timestamp as an id. But it will be sufficient for the current app implementation :)
         id: `${visistedAt}`,
         data: vistied,
-        expires: null,
+        // TODO: for some reason null expiry time still expires. Just give a huge number in here instead :)
+        expires: 1000 * 3600 * 24 * 99999,
       });
 
-      const storageContent = await visitedStorage.getAllDataForKey('progressItem');
+      const storageContent = await getAllDataForKey('progressItem');
       setTrackingProgress(() => storageContent)
     }
   }
@@ -126,8 +127,18 @@ export default function Tracking ({ navigation }: { navigation: any }) {
         expires: 1000 * 3600 * 24
       });
 
-      const history = await visitedStorage.getAllDataForKey('historyItem')
+      const history = await getAllDataForKey('historyItem')
       setTrackingHistory(() => history)
+    }
+  }
+
+  const getAllDataForKey = async (key: string) => {
+    let data = []
+    try {
+      data = await visitedStorage.getAllDataForKey(key);
+      return data;
+    } catch (e) {
+      return [];
     }
   }
 
